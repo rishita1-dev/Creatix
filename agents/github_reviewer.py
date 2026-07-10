@@ -1,26 +1,28 @@
 from llm.gemini import ask_gemini
 
 
-def review_repository(repository_content):
+def review_repository(repository_text):
 
     prompt = f"""
-You are a senior software engineer.
+You are a Senior Software Engineer.
 
-Review the following repository.
+Analyze this GitHub repository.
 
-Suggest
+Give:
 
-1. Code Improvements
+1. Repository Summary
 
-2. Bugs
+2. Folder Structure Review
 
-3. Better Naming
+3. Code Quality
 
-4. Documentation Improvements
+4. Possible Bugs
+
+5. Improvement Suggestions
 
 Repository:
 
-{repository_content}
+{repository_text}
 """
 
     return ask_gemini(prompt)
