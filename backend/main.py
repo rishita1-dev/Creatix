@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-from llm.gemini import ask_gemini
+from agents.code_generator import generate_code
+from agents.code_explainer import explain_code
+from agents.code_debugger import debug_code
 
 app = FastAPI(
     title="Creatix API",
@@ -11,6 +13,7 @@ app = FastAPI(
 
 
 class PromptRequest(BaseModel):
+    task: str
     prompt: str
 
 
@@ -22,9 +25,19 @@ def home():
 
 
 @app.post("/generate")
-def generate_code(request: PromptRequest):
+def generate(request: PromptRequest):
 
-    answer = ask_gemini(request.prompt)
+    if request.task == "Generate Code":
+        answer = generate_code(request.prompt)
+
+    elif request.task == "Explain Code":
+        answer = explain_code(request.prompt)
+
+    elif request.task == "Debug Code":
+        answer = debug_code(request.prompt)
+
+    else:
+        answer = "Feature coming soon."
 
     return {
         "response": answer
