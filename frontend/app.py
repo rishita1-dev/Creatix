@@ -61,10 +61,12 @@ if st.button("Submit", use_container_width=True):
     if prompt == "":
         st.warning("Please enter a prompt.")
     else:
+        st.write("Sending request to backend...")
+        st.write({"task": task, "prompt": prompt, "repo_url": repo_url})
 
         response = requests.post(
             "http://127.0.0.1:8000/generate",
-            json={"task":task,"prompt": prompt}
+            json={"task":task,"prompt": prompt,"repo_url": repo_url}
         )
 
         if response.status_code == 200:
@@ -76,5 +78,5 @@ if st.button("Submit", use_container_width=True):
             st.write(result["response"])
 
         else:
-
-            st.error("Backend Error")
+            st.error(f"Backend Error: {response.status_code}")
+            st.write(response.text)
