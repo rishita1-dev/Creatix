@@ -42,29 +42,57 @@ def generate(request: PromptRequest):
     
     elif request.task == "Review GitHub Repository":
 
-        if not request.repo_url:
-            return {"response": "Please provide a GitHub repository URL."}
+        try:
+            print("\n--- GITHUB REVIEW STARTED ---")
 
-        repo_url = request.repo_url.rstrip("/")
+            # 1. Get and clean repository URL
+            repo_url = request.repo_url.strip()
 
-        parts = repo_url.split("/")
+            print("STEP 1 - Received URL:", repr(repo_url))
 
-        if len(parts) < 2:
-            return {"response": "Invalid GitHub repository URL."}
+            if not repo_url:
+                answer = "Error: Please provide a GitHub repository URL."
 
-        owner = parts[-2]
-        repo_name = parts[-1]
+            else:
+                # 2. Extract owner and repository name
+                parts = repo_url.rstrip("/").split("/")
 
-        full_repo_name = f"{owner}/{repo_name}"
+                print("STEP 2 - URL parts:", parts)
 
-        repo = get_repository(full_repo_name)
+                if len(parts) < 2:
+                    raise ValueError("Invalid GitHub repository URL")
 
-        repository_text = get_repository_content(repo)
+                owner = parts[-2]
+                repo_name = parts[-1]
 
-        result = review_repository(repository_text)
+                full_repo_name = f"{owner}/{repo_name}"
 
-    else:
-        answer = "Feature coming soon."
+                print("STEP 3 - Full repository name:", full_repo_name)
+
+                # 3. Fetch repository
+                repo = get_repository(full_repo_name)
+
+                print("STEP 4 - Repository fetched successfully")
+
+                # 4. Read repository files
+                repository_text = get_repository_content(repo)
+
+                print("STEP 5 - Repository content fetched")
+                print("Repository content length:", len(repository_text))
+
+                # 5. Send repository content for AI review
+                answer = review_repository(repository_text)
+
+                print("STEP 6 - AI review completed successfully")
+
+        except Exception as e:
+            print("\n========== ACTUAL GITHUB REVIEW ERROR ==========")
+            print("Error type:", type(e).__name__)
+            print("Error message:", str(e))
+            print("Full error:", repr(e))
+            print("================================================\n")
+
+            answer = f"GitHub review failed: {type(e).__name__}: {str(e)}"
 
     return {
         "response": answer
