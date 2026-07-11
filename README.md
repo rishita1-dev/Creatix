@@ -16,7 +16,7 @@ Creatix is an AI-powered coding assistant that helps developers generate code, e
 
 - **Frontend:** Streamlit
 - **Backend:** FastAPI
-- **LLM:** Groq (Llama 3.3) / Google Gemini
+- **LLM:** Google Gemini
 - **Frameworks:** LangChain, LangGraph
 - **Vector Database:** ChromaDB
 - **API:** GitHub API
