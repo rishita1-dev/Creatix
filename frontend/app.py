@@ -58,15 +58,19 @@ st.markdown("---")
 # -----------------------------
 if st.button("Submit", use_container_width=True):
 
-    if prompt == "":
+    if prompt.strip() == "":
         st.warning("Please enter a prompt.")
+
+    elif task == "Repository Q&A (RAG)" and repo_url.strip() == "":
+        st.warning("Please enter a GitHub Repository URL.")
+
     else:
         st.write("Sending request to backend...")
         st.write({"task": task, "prompt": prompt, "repo_url": repo_url})
 
         response = requests.post(
             "http://127.0.0.1:8000/generate",
-            json={"task":task,"prompt": prompt,"repo_url": repo_url}
+            json={"task":task,"prompt": prompt,"repo_url": repo_url}, timeout=300
         )
 
         if response.status_code == 200:
