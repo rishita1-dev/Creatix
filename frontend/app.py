@@ -23,7 +23,7 @@ st.markdown("---")
 # -----------------------------
 task = st.radio(
     "Choose Task",
-    (
+    (   "Auto",
         "Generate Code",
         "Explain Code",
         "Debug Code",
@@ -74,12 +74,34 @@ if st.button("Submit", use_container_width=True):
         )
 
         if response.status_code == 200:
-
+            
             result = response.json()
 
-            st.success("Response")
+    # Show which task the Planner Agent selected
+            if "selected_task" in result:
+                st.info(
+                    f"Automatically selected: {result['selected_task']}"
+                )
 
-            st.write(result["response"])
+            # Show why the Planner Agent selected that task
+            if "reason" in result:
+                st.caption(
+                    f"Reason: {result['reason']}"
+                )
+
+            # Show the final response
+            if "response" in result:
+                st.success("Response")
+                st.write(result["response"])
+
+            # Show backend error if returned in JSON
+            elif "error" in result:
+                st.error(result["error"])
+
+            else:
+                st.error("Unexpected response from backend.")
+
+                    
 
         else:
             st.error(f"Backend Error: {response.status_code}")

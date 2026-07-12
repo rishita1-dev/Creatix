@@ -36,7 +36,17 @@ def home():
 
 @app.post("/generate")
 def generate(request: PromptRequest):
+    if request.task == "Auto":
+        result = agent_router.route(
+            user_prompt=request.prompt,
+            repo_url=request.repo_url
+        )
 
+        return {
+            "response": result["response"],
+            "selected_task": result["task"],
+            "reason": result["reason"]
+        }
     if request.task == "Generate Code":
         answer = generate_code(request.prompt)
 
