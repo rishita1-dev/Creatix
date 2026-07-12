@@ -10,7 +10,8 @@ from github_tools.github_api import get_repository, get_repository_content
 from agents.github_reviewer import review_repository
 
 from agents.repo_qa_agent import RepoQAAgent
-
+from agents.agent_router import AgentRouter
+agent_router = AgentRouter()
 repo_qa_agent = RepoQAAgent()
 
 app = FastAPI(
