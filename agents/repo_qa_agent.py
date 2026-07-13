@@ -2,8 +2,8 @@ import os
 from dotenv import load_dotenv
 import google.generativeai as genai
 
-from rag.repo_loader import load_github_repository
-from rag.code_chunker import chunk_documents
+from rag.repo_loader import RepoLoader
+from rag.code_chunker import CodeChunker
 from rag.vector_store import CodeVectorStore
 
 
@@ -31,6 +31,8 @@ class RepoQAAgent:
             )
 
         genai.configure(api_key=api_key)
+        self.repo_loader = RepoLoader()
+        self.chunker = CodeChunker()
         self.vector_store = None
         self.repo_url = None
 
@@ -42,7 +44,7 @@ class RepoQAAgent:
 
         print("Loading GitHub repository...")
 
-        documents = load_github_repository(repo_url)
+        documents = self.repo_loader.load_repository(repo_url)
 
         if not documents:
             raise ValueError(
@@ -53,7 +55,7 @@ class RepoQAAgent:
 
         print("Creating code chunks...")
 
-        chunks = chunk_documents(documents)
+        chunks = self.chunker.chunk_documents(documents)
 
         if not chunks:
             raise ValueError(
@@ -68,6 +70,7 @@ class RepoQAAgent:
         self.vector_store.build_index(chunks)
 
         self.repo_url = repo_url
+        self.repo_loader.cleanup()
 
         return {
             "files_loaded": len(documents),
@@ -79,7 +82,7 @@ class RepoQAAgent:
         print("========== LOADING REPOSITORY ==========")
         print("Repo URL:", repo_url)
 
-        documents = load_github_repository(repo_url)
+        documents = load_repository(repo_url)
 
         print("Documents loaded:", len(documents))
 

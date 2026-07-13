@@ -6,7 +6,7 @@ repo_url = "https://github.com/rishita1-dev/Creatix"
 
 print("Loading repository...")
 
-documents = load_github_repository(repo_url)
+documents = load_repository(repo_url)
 
 print(f"Total files loaded: {len(documents)}")
 

@@ -3,7 +3,7 @@ from rag.repo_loader import load_github_repository
 
 repo_url = "https://github.com/rishita1-dev/Creatix"
 
-documents = load_github_repository(repo_url)
+documents = load_repository(repo_url)
 
 print(f"Total files loaded: {len(documents)}")
 

@@ -1,7 +1,5 @@
 from agents.agent_router import AgentRouter
 
-
-
 class CreatixPipeline:
     """
     Main autonomous pipeline for Creatix.
@@ -10,7 +8,7 @@ class CreatixPipeline:
     def __init__(self):
         self.router = AgentRouter()
 
-    def run(self, user_prompt, repo_url=None):
+    def run(self,task_type, user_prompt, repo_url=None):
         """
         Run the complete Creatix agent workflow.
         """
@@ -18,7 +16,8 @@ class CreatixPipeline:
         try:
             result = self.router.route(
                 user_prompt=user_prompt,
-                repo_url=repo_url
+                repo_url=repo_url,
+                task_type=task_type
             )
 
             return {

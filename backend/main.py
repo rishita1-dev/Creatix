@@ -24,14 +24,7 @@ sys.path.append(
     )
 )
 
-
-
 from agents.pipeline import CreatixPipeline
-
-
-
-
-
 
 app = FastAPI(
     title="Creatix API",

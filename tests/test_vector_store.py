@@ -1,4 +1,4 @@
-from rag.repo_loader import load_github_repository
+from rag.repo_loader import load_repository
 from rag.code_chunker import chunk_documents
 from rag.vector_store import CodeVectorStore
 
@@ -8,7 +8,7 @@ repo_url = "https://github.com/rishita1-dev/Creatix"
 
 print("1. Loading repository...")
 
-documents = load_github_repository(repo_url)
+documents = load_repository(repo_url)
 
 print(f"Files loaded: {len(documents)}")
 
