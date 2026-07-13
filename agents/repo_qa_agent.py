@@ -24,7 +24,7 @@ class RepoQAAgent:
 
         genai.configure(api_key=api_key)
 
-        self.model = genai.GenerativeModel("gemini-2.5-flash")
+        self.model = genai.GenerativeModel("gemini-3.5-flash")
 
         self.repo_loader = RepoLoader()
         self.chunker = CodeChunker()

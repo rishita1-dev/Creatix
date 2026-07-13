@@ -1,20 +1,10 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
-from typing import Optional
-
-from agents.code_generator import generate_code
-from agents.code_explainer import explain_code
-from agents.code_debugger import debug_code
-
-from github_tools.github_api import get_repository, get_repository_content
-from agents.github_reviewer import review_repository
-
-from agents.repo_qa_agent import RepoQAAgent
-from agents.agent_router import AgentRouter
-agent_router = AgentRouter()
-repo_qa_agent = RepoQAAgent()
 import sys
 import os
+
+
+# --------------------------------------------------
+# Add project root to Python path
+# --------------------------------------------------
 
 sys.path.append(
     os.path.dirname(
@@ -24,138 +14,162 @@ sys.path.append(
     )
 )
 
+
+from typing import Optional
+
+from fastapi import FastAPI
+from pydantic import BaseModel
+
 from agents.pipeline import CreatixPipeline
+
+
+# --------------------------------------------------
+# FastAPI Application
+# --------------------------------------------------
 
 app = FastAPI(
     title="Creatix API",
-    description="Backend API for Creatix Autonomous Coding Assistant",
+    description=(
+        "Backend API for Creatix Autonomous "
+        "AI Coding Assistant"
+    ),
     version="1.0"
 )
 
+
+# --------------------------------------------------
+# Initialize Pipeline
+# --------------------------------------------------
+
 pipeline = CreatixPipeline()
 
+
+# --------------------------------------------------
+# Request Model
+# --------------------------------------------------
+
 class PromptRequest(BaseModel):
+
     task: str
-    prompt: str=""
+    prompt: str = ""
     repo_url: Optional[str] = None
 
 
+# --------------------------------------------------
+# Home Endpoint
+# --------------------------------------------------
+
 @app.get("/")
 def home():
+
     return {
-        "message": "Welcome to Creatix API"
+        "message": "Welcome to Creatix API",
+        "status": "running"
     }
 
 
+# --------------------------------------------------
+# Main Creatix Endpoint
+# --------------------------------------------------
+
 @app.post("/generate")
 def generate(request: PromptRequest):
-    if request.task == "Auto":
+
+    try:
+
+        print("\n========== NEW REQUEST ==========")
+        print(f"Task: {request.task}")
+        print(f"Prompt: {request.prompt}")
+        print(f"Repository URL: {request.repo_url}")
+        print("=================================\n")
+
+
+        # ------------------------------------------
+        # Basic validation
+        # ------------------------------------------
+
+        if not request.prompt.strip():
+
+            return {
+                "success": False,
+                "error": "Please enter a prompt."
+            }
+
+
+        repository_tasks = [
+            "Review GitHub Repository",
+            "Repository Q&A (RAG)"
+        ]
+
+
+        if (
+            request.task in repository_tasks
+            and (
+                not request.repo_url
+                or not request.repo_url.strip()
+            )
+        ):
+
+            return {
+                "success": False,
+                "error": (
+                    "Please provide a GitHub "
+                    "repository URL."
+                )
+            }
+
+
+        # ------------------------------------------
+        # Run complete multi-agent pipeline
+        # ------------------------------------------
+
         result = pipeline.run(
+            task_type=request.task,
             user_prompt=request.prompt,
             repo_url=request.repo_url
         )
 
+
+        # ------------------------------------------
+        # Handle pipeline failure
+        # ------------------------------------------
+
+        if not result.get("success", False):
+
+            return {
+                "success": False,
+                "error": result.get(
+                    "error",
+                    "Unknown pipeline error."
+                )
+            }
+
+
+        # ------------------------------------------
+        # Return complete pipeline result
+        # ------------------------------------------
+
         return {
-            "response": result["response"],
+            "success": True,
+            "task": result["task"],
             "selected_task": result["task"],
-            "reason": result["reason"]
+            "reason": result["reason"],
+            "review": result["review"],
+            "revised": result["revised"],
+            "response": result["response"]
         }
-    if request.task == "Generate Code":
-        answer = generate_code(request.prompt)
 
-    elif request.task == "Explain Code":
-        answer = explain_code(request.prompt)
 
-    elif request.task == "Debug Code":
-        answer = debug_code(request.prompt)
-    
-    elif request.task == "Review GitHub Repository":
+    except Exception as e:
 
-        try:
-            print("\n--- GITHUB REVIEW STARTED ---")
+        print("\n========== BACKEND ERROR ==========")
+        print(f"Type: {type(e).__name__}")
+        print(f"Message: {str(e)}")
+        print("===================================\n")
 
-            # 1. Get and clean repository URL
-            repo_url = request.repo_url.strip()
-
-            print("STEP 1 - Received URL:", repr(repo_url))
-
-            if not repo_url:
-                answer = "Error: Please provide a GitHub repository URL."
-
-            else:
-                # 2. Extract owner and repository name
-                parts = repo_url.rstrip("/").split("/")
-
-                print("STEP 2 - URL parts:", parts)
-
-                if len(parts) < 2:
-                    raise ValueError("Invalid GitHub repository URL")
-
-                owner = parts[-2]
-                repo_name = parts[-1]
-
-                full_repo_name = f"{owner}/{repo_name}"
-
-                print("STEP 3 - Full repository name:", full_repo_name)
-
-                # 3. Fetch repository
-                repo = get_repository(full_repo_name)
-
-                print("STEP 4 - Repository fetched successfully")
-
-                # 4. Read repository files
-                repository_text = get_repository_content(repo)
-
-                print("STEP 5 - Repository content fetched")
-                print("Repository content length:", len(repository_text))
-
-                # 5. Send repository content for AI review
-                answer = review_repository(repository_text)
-
-                print("STEP 6 - AI review completed successfully")
-
-        except Exception as e:
-            print("\n========== ACTUAL GITHUB REVIEW ERROR ==========")
-            print("Error type:", type(e).__name__)
-            print("Error message:", str(e))
-            print("Full error:", repr(e))
-            print("================================================\n")
-
-            answer = f"GitHub review failed: {type(e).__name__}: {str(e)}"    
-
-    elif request.task == "Repository Q&A (RAG)":
-
-        try:
-            print("\n--- REPOSITORY Q&A STARTED ---")
-
-            repo_url = request.repo_url.strip()
-
-            if not repo_url:
-                answer = "Error: Please provide a GitHub repository URL."
-
-            elif not request.prompt.strip():
-                answer = "Error: Please enter a question."
-
-            else:
-                print("Loading repository...")
-
-                stats = repo_qa_agent.load_repository(repo_url)
-
-                print(stats)
-
-                print("Repository loaded successfully.")
-
-                answer = repo_qa_agent.ask(request.prompt)
-
-        except Exception as e:
-
-            print("\n========== REPOSITORY Q&A ERROR ==========")
-            print(type(e).__name__)
-            print(str(e))
-            print("==========================================")
-
-            answer = f"Repository Q&A failed: {type(e).__name__}: {str(e)}"
-
-    return {
-        "response": answer
-    }
+        return {
+            "success": False,
+            "error": (
+                f"{type(e).__name__}: {str(e)}"
+            )
+        }

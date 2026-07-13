@@ -2,9 +2,9 @@ import streamlit as st
 import requests
 
 
-# -----------------------------
+# --------------------------------------------------
 # Page Configuration
-# -----------------------------
+# --------------------------------------------------
 
 st.set_page_config(
     page_title="Creatix",
@@ -13,19 +13,22 @@ st.set_page_config(
 )
 
 
-# -----------------------------
+# --------------------------------------------------
 # Title
-# -----------------------------
+# --------------------------------------------------
 
 st.title("🤖 Creatix")
-st.subheader("Autonomous Coding Assistant")
+
+st.subheader(
+    "Autonomous AI Coding Assistant"
+)
 
 st.markdown("---")
 
 
-# -----------------------------
+# --------------------------------------------------
 # Task Selection
-# -----------------------------
+# --------------------------------------------------
 
 task = st.radio(
     "Choose Task",
@@ -42,137 +45,238 @@ task = st.radio(
 st.markdown("---")
 
 
-# -----------------------------
-# Prompt Box
-# -----------------------------
+# --------------------------------------------------
+# Prompt Input
+# --------------------------------------------------
 
 prompt = st.text_area(
     "Prompt",
-    placeholder="Enter your coding question here...",
+    placeholder=(
+        "Enter your coding question here..."
+    ),
     height=200
 )
 
 
-# -----------------------------
+# --------------------------------------------------
 # Repository URL
-# -----------------------------
+# --------------------------------------------------
 
 repo_url = st.text_input(
     "Repository URL (Optional)",
-    placeholder="https://github.com/username/repository"
+    placeholder=(
+        "https://github.com/username/repository"
+    )
 )
 
 st.markdown("---")
 
 
-# -----------------------------
+# --------------------------------------------------
 # Submit Button
-# -----------------------------
+# --------------------------------------------------
 
-if st.button("Submit", use_container_width=True):
+if st.button(
+    "Submit",
+    use_container_width=True
+):
 
-    if prompt.strip() == "":
-        st.warning("Please enter a prompt.")
+    # ----------------------------------------------
+    # Validate prompt
+    # ----------------------------------------------
+
+    if not prompt.strip():
+
+        st.warning(
+            "Please enter a prompt."
+        )
+
+
+    # ----------------------------------------------
+    # Validate repository URL
+    # ----------------------------------------------
 
     elif (
         task in [
             "Review GitHub Repository",
             "Repository Q&A (RAG)"
         ]
-        and repo_url.strip() == ""
+        and not repo_url.strip()
     ):
+
         st.warning(
             "Please enter a GitHub Repository URL."
         )
 
-    else:
-        st.write("Sending request to backend...")
 
-        st.write(
-            {
-                "task": task,
-                "prompt": prompt,
-                "repo_url": repo_url
-            }
-        )
+    else:
 
         try:
-            response = requests.post(
-                "http://127.0.0.1:8000/generate",
-                json={
-                    "task": task,
-                    "prompt": prompt,
-                    "repo_url": repo_url
-                },
-                timeout=300
-            )
+
+            with st.spinner(
+                "Creatix is processing your request..."
+            ):
+
+                response = requests.post(
+                    "http://127.0.0.1:8000/generate",
+                    json={
+                        "task": task,
+                        "prompt": prompt,
+                        "repo_url": (
+                            repo_url.strip()
+                            if repo_url.strip()
+                            else None
+                        )
+                    },
+                    timeout=300
+                )
+
+
+            # --------------------------------------
+            # Successful HTTP response
+            # --------------------------------------
 
             if response.status_code == 200:
 
                 result = response.json()
 
-                # Show which task the Planner Agent selected
-                if "selected_task" in result:
-                    st.info(
-                        f"Automatically selected: "
-                        f"{result['selected_task']}"
-                    )
 
-                # Also support "task" returned by AgentRouter
-                elif "task" in result:
-                    st.info(
-                        f"Selected task: {result['task']}"
-                    )
+                # ----------------------------------
+                # Backend/pipeline error
+                # ----------------------------------
 
-                # Show why Planner selected that task
-                if "reason" in result:
-                    st.caption(
-                        f"Reason: {result['reason']}"
-                    )
+                if not result.get(
+                    "success",
+                    False
+                ):
 
-                # Show whether reviewer revised the response
-                if "revised" in result:
-                    if result["revised"]:
-                        st.info(
-                            "The original response was reviewed "
-                            "and improved by the Reviewer Agent."
+                    st.error(
+                        result.get(
+                            "error",
+                            "Unknown error occurred."
                         )
-                    else:
-                        st.caption(
-                            "The original response was approved "
-                            "by the Reviewer Agent."
-                        )
+                    )
 
-                # Show final response
-                if "response" in result:
-                    st.success("Response")
-                    st.markdown(result["response"])
 
-                # Show backend error returned in JSON
-                elif "error" in result:
-                    st.error(result["error"])
+                # ----------------------------------
+                # Successful Creatix response
+                # ----------------------------------
 
                 else:
-                    st.error(
-                        "Unexpected response from backend."
+
+                    selected_task = result.get(
+                        "selected_task"
                     )
 
+                    if selected_task:
+
+                        if task == "Auto":
+
+                            st.info(
+                                "Automatically selected: "
+                                f"{selected_task}"
+                            )
+
+                        else:
+
+                            st.info(
+                                "Selected task: "
+                                f"{selected_task}"
+                            )
+
+
+                    # ------------------------------
+                    # Planner/routing reason
+                    # ------------------------------
+
+                    reason = result.get("reason")
+
+                    if reason:
+
+                        st.caption(
+                            f"Reason: {reason}"
+                        )
+
+
+                    # ------------------------------
+                    # Reviewer information
+                    # ------------------------------
+
+                    if "revised" in result:
+
+                        if result["revised"]:
+
+                            st.info(
+                                "The original response "
+                                "was reviewed and improved "
+                                "by the Reviewer Agent."
+                            )
+
+                        else:
+
+                            st.caption(
+                                "The original response "
+                                "was approved by the "
+                                "Reviewer Agent."
+                            )
+
+
+                    # ------------------------------
+                    # Final response
+                    # ------------------------------
+
+                    if "response" in result:
+
+                        st.success("Response")
+
+                        st.markdown(
+                            result["response"]
+                        )
+
+                    else:
+
+                        st.error(
+                            "No response was returned "
+                            "by the backend."
+                        )
+
+
+            # --------------------------------------
+            # HTTP error
+            # --------------------------------------
+
             else:
+
                 st.error(
-                    f"Backend Error: {response.status_code}"
+                    "Backend Error: "
+                    f"{response.status_code}"
                 )
-                st.write(response.text)
+
+                st.write(
+                    response.text
+                )
+
 
         except requests.exceptions.ConnectionError:
+
             st.error(
                 "Could not connect to the backend. "
-                "Make sure FastAPI is running on port 8000."
+                "Make sure FastAPI is running "
+                "on port 8000."
             )
+
 
         except requests.exceptions.Timeout:
+
             st.error(
-                "The request took too long and timed out."
+                "The request took too long "
+                "and timed out."
             )
 
+
         except Exception as e:
-            st.error(f"An unexpected error occurred: {e}")
+
+            st.error(
+                "An unexpected error occurred: "
+                f"{type(e).__name__}: {str(e)}"
+            )
