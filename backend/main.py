@@ -13,6 +13,25 @@ from agents.repo_qa_agent import RepoQAAgent
 from agents.agent_router import AgentRouter
 agent_router = AgentRouter()
 repo_qa_agent = RepoQAAgent()
+import sys
+import os
+
+sys.path.append(
+    os.path.dirname(
+        os.path.dirname(
+            os.path.abspath(__file__)
+        )
+    )
+)
+
+
+
+from agents.pipeline import CreatixPipeline
+
+
+
+
+
 
 app = FastAPI(
     title="Creatix API",
@@ -20,6 +39,7 @@ app = FastAPI(
     version="1.0"
 )
 
+pipeline = CreatixPipeline()
 
 class PromptRequest(BaseModel):
     task: str
@@ -37,7 +57,7 @@ def home():
 @app.post("/generate")
 def generate(request: PromptRequest):
     if request.task == "Auto":
-        result = agent_router.route(
+        result = pipeline.run(
             user_prompt=request.prompt,
             repo_url=request.repo_url
         )
