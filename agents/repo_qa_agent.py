@@ -4,165 +4,132 @@ import google.generativeai as genai
 
 from rag.repo_loader import RepoLoader
 from rag.code_chunker import CodeChunker
-from rag.vector_store import CodeVectorStore
-
+from rag.vector_store import FAISSVectorStore
+from llm.embeddings import GeminiEmbeddings
 
 load_dotenv()
 
 
 class RepoQAAgent:
     """
-    Repository Q&A Agent.
-
-    It:
-    1. Loads a GitHub repository.
-    2. Splits repository files into chunks.
-    3. Creates a vector index.
-    4. Retrieves relevant chunks for a question.
-    5. Sends only relevant context to Gemini.
+    Repository Question Answering Agent using RAG.
     """
 
     def __init__(self):
+
         api_key = os.getenv("GEMINI_API_KEY")
 
         if not api_key:
-            raise ValueError(
-                "GEMINI_API_KEY not found in .env file."
-            )
+            raise ValueError("GEMINI_API_KEY not found.")
 
         genai.configure(api_key=api_key)
+
+        self.model = genai.GenerativeModel("gemini-2.5-flash")
+
         self.repo_loader = RepoLoader()
         self.chunker = CodeChunker()
-        self.vector_store = None
-        self.repo_url = None
+        self.embeddings = GeminiEmbeddings()
+        self.vector_store = FAISSVectorStore()
 
+        self.current_repo = None
 
     def load_repository(self, repo_url):
-        """
-        Load and index a GitHub repository.
-        """
 
-        print("Loading GitHub repository...")
+        print("=" * 60)
+        print("Loading Repository...")
+        print("=" * 60)
 
         documents = self.repo_loader.load_repository(repo_url)
 
-        if not documents:
-            raise ValueError(
-                "No supported files were found in the repository."
-            )
-
-        print(f"Loaded {len(documents)} files.")
-
-        print("Creating code chunks...")
+        print(f"Loaded {len(documents)} files")
 
         chunks = self.chunker.chunk_documents(documents)
 
-        if not chunks:
-            raise ValueError(
-                "No code chunks could be created."
+        print(f"Created {len(chunks)} chunks")
+
+        texts = []
+
+        for chunk in chunks:
+
+            texts.append(
+                f"File: {chunk['path']}\n\n{chunk['content']}"
             )
 
-        print(f"Created {len(chunks)} chunks.")
+        print("Generating embeddings...")
 
-        print("Building vector index...")
+        embeddings = self.embeddings.embed_documents(texts)
 
-        self.vector_store = CodeVectorStore()
-        self.vector_store.build_index(chunks)
+        print("Building FAISS Index...")
 
-        self.repo_url = repo_url
+        self.vector_store.build_index(
+            embeddings,
+            chunks
+        )
+
+        self.current_repo = repo_url
+
         self.repo_loader.cleanup()
 
-        return {
-            "files_loaded": len(documents),
-            "chunks_created": len(chunks)
-        }
-    
-    def load_repository(self, repo_url):
-
-        print("========== LOADING REPOSITORY ==========")
-        print("Repo URL:", repo_url)
-
-        documents = load_repository(repo_url)
-
-        print("Documents loaded:", len(documents))
-
-        chunks = chunk_documents(documents)
-
-        print("Chunks created:", len(chunks))
-
-        self.vector_store = CodeVectorStore()
-
-        print("Building vector index...")
-
-        self.vector_store.build_index(chunks)
-
-        print("Vector index built successfully!")
-
-        self.repo_url = repo_url
+        print("Repository Ready!")
 
         return {
             "files_loaded": len(documents),
             "chunks_created": len(chunks)
         }
-
 
     def ask(self, question, top_k=5):
-        """
-        Answer a question using relevant repository context.
-        """
 
-        if self.vector_store is None:
+        if self.vector_store.index is None:
             raise ValueError(
                 "Repository has not been loaded yet."
             )
 
+        print("Searching repository...")
+
+        query_embedding = self.embeddings.embed_query(
+            question
+        )
+
         relevant_chunks = self.vector_store.search(
-            query=question,
+            query_embedding=query_embedding,
             top_k=top_k
         )
 
         if not relevant_chunks:
-            return "No relevant repository context was found."
+            return "No relevant repository context found."
 
-        context_parts = []
+        context = ""
 
         for chunk in relevant_chunks:
-            context_parts.append(
-                f"""
-FILE: {chunk['file_path']}
-CHUNK: {chunk['chunk_number']}
 
+            context += f"""
+FILE:
+{chunk['path']}
+
+CODE:
 {chunk['content']}
-"""
-            )
 
-        context = "\n\n---\n\n".join(context_parts)
+----------------------------------
+"""
 
         prompt = f"""
-You are an AI coding assistant analyzing a GitHub repository.
+You are an expert software engineer.
 
-Answer the user's question using the repository context provided below.
+Use ONLY the repository context below.
 
-Rules:
-- Base your answer primarily on the provided repository code.
-- Mention relevant file names when useful.
-- Do not invent functions, classes, APIs, or files that are not present in the context.
-- If the context is insufficient, clearly say so.
-- Explain the answer clearly and technically.
-
-REPOSITORY CONTEXT:
+Repository Context:
 
 {context}
 
-USER QUESTION:
+Question:
 
 {question}
 
-ANSWER:
+Answer the question clearly.
+Mention file names whenever appropriate.
+Do not hallucinate.
 """
 
-        model = genai.GenerativeModel("gemini-2.5-flash")
-
-        response = model.generate_content(prompt)
+        response = self.model.generate_content(prompt)
 
         return response.text

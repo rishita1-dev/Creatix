@@ -22,7 +22,7 @@ class GeminiEmbeddings:
 
         genai.configure(api_key=api_key)
 
-        self.model_name = "models/text-embedding-004"
+        self.model_name = "models/gemini-embedding-001"
 
     def embed_document(self, text):
         """
