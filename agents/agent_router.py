@@ -23,7 +23,7 @@ class AgentRouter:
 
         genai.configure(api_key=api_key)
 
-        self.model = genai.GenerativeModel("gemini-2.5-flash")
+        model = genai.GenerativeModel("gemini-3.5-flash")
         self.planner = PlannerAgent()
         self.repo_qa_agent = RepoQAAgent()
         self.reviewer = ReviewerAgent()

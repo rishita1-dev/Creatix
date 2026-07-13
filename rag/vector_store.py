@@ -1,99 +1,87 @@
 import faiss
 import numpy as np
-from sentence_transformers import SentenceTransformer
 
-class CodeVectorStore:
-    """
-    Stores repository code chunks as vector embeddings
-    and retrieves the most relevant chunks for a question.
-    """
 
-    def __init__(self, model_name="all-MiniLM-L6-v2"):
-        print("Loading embedding model...")
+class FAISSVectorStore:
 
-        self.model = SentenceTransformer(model_name)
-
+    def __init__(self):
         self.index = None
         self.chunks = []
 
-
-    def build_index(self, chunks):
+    def build_index(
+        self,
+        embeddings,
+        chunks,
+    ):
         """
-        Convert all code chunks into embeddings
-        and store them in a FAISS index.
+        Build a FAISS index from repository embeddings.
         """
 
-        if not chunks:
-            raise ValueError("No chunks provided to build the index.")
+        if len(embeddings) == 0:
+            raise ValueError(
+                "Cannot build index with zero embeddings."
+            )
 
-        self.chunks = chunks
-
-        texts = [
-            chunk["content"]
-            for chunk in chunks
-        ]
-
-        print(f"Creating embeddings for {len(texts)} chunks...")
-
-        embeddings = self.model.encode(
-            texts,
-            convert_to_numpy=True,
-            show_progress_bar=True
+        embeddings = np.asarray(
+            embeddings,
+            dtype=np.float32,
         )
 
-        embeddings = embeddings.astype("float32")
+        dimension = embeddings.shape[1]
 
         # Normalize vectors for cosine similarity
         faiss.normalize_L2(embeddings)
-
-        dimension = embeddings.shape[1]
 
         self.index = faiss.IndexFlatIP(dimension)
 
         self.index.add(embeddings)
 
-        print(
-            f"Vector index created successfully "
-            f"with {self.index.ntotal} vectors."
-        )
+        self.chunks = chunks
 
-
-    def search(self, query, top_k=5):
+    def search(
+        self,
+        query_embedding,
+        top_k=5,
+    ):
         """
-        Find the code chunks most relevant to the user's question.
+        Find the most relevant repository chunks.
         """
 
         if self.index is None:
             raise ValueError(
-                "Vector index has not been built yet."
+                "FAISS index has not been built."
             )
 
-        query_embedding = self.model.encode(
-            [query],
-            convert_to_numpy=True
-        ).astype("float32")
+        query_embedding = np.asarray(
+            [query_embedding],
+            dtype=np.float32,
+        )
 
         faiss.normalize_L2(query_embedding)
 
+        actual_k = min(
+            top_k,
+            len(self.chunks),
+        )
+
         scores, indices = self.index.search(
             query_embedding,
-            top_k
+            actual_k,
         )
 
         results = []
 
-        for score, index in zip(scores[0], indices[0]):
-
+        for score, index in zip(
+            scores[0],
+            indices[0],
+        ):
             if index == -1:
                 continue
 
-            chunk = self.chunks[index]
+            chunk = self.chunks[index].copy()
 
-            results.append({
-                "file_path": chunk["file_path"],
-                "chunk_number": chunk["chunk_number"],
-                "content": chunk["content"],
-                "score": float(score)
-            })
+            chunk["score"] = float(score)
+
+            results.append(chunk)
 
         return results

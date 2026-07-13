@@ -1,43 +1,54 @@
-def chunk_documents(documents, chunk_size=1500, overlap=200):
-    """
-    Split repository files into smaller overlapping chunks.
+class CodeChunker:
 
-    Args:
-        documents: List of dictionaries containing
-                   'file_path' and 'content'.
-        chunk_size: Maximum number of characters in each chunk.
-        overlap: Number of characters shared between consecutive chunks.
+    def __init__(
+        self,
+        chunk_size=1500,
+        chunk_overlap=200,
+    ):
+        if chunk_overlap >= chunk_size:
+            raise ValueError(
+                "chunk_overlap must be smaller than chunk_size."
+            )
 
-    Returns:
-        List of chunk dictionaries.
-    """
+        self.chunk_size = chunk_size
+        self.chunk_overlap = chunk_overlap
 
-    chunks = []
+    def chunk_documents(self, documents):
+        """
+        Split repository files into smaller overlapping chunks.
+        """
 
-    for document in documents:
-        file_path = document["file_path"]
-        content = document["content"]
+        chunks = []
 
-        # Skip empty files
-        if not content.strip():
-            continue
+        for document in documents:
 
-        start = 0
-        chunk_number = 0
+            path = document["path"]
+            content = document["content"]
 
-        while start < len(content):
-            end = start + chunk_size
-            chunk_content = content[start:end]
+            start = 0
 
-            chunks.append({
-                "file_path": file_path,
-                "chunk_number": chunk_number,
-                "content": chunk_content
-            })
+            while start < len(content):
 
-            chunk_number += 1
+                end = start + self.chunk_size
 
-            # Move forward while keeping some overlap
-            start += chunk_size - overlap
+                chunk_text = content[start:end]
 
-    return chunks
+                if chunk_text.strip():
+                    chunks.append(
+                        {
+                            "path": path,
+                            "content": chunk_text,
+                            "start": start,
+                            "end": min(
+                                end,
+                                len(content)
+                            ),
+                        }
+                    )
+
+                if end >= len(content):
+                    break
+
+                start = end - self.chunk_overlap
+
+        return chunks

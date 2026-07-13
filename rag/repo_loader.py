@@ -1,112 +1,187 @@
 import os
 import shutil
+import subprocess
 import tempfile
-from git import Repo
 
 
-# File types that Creatix will read from a repository
-SUPPORTED_EXTENSIONS = {
-    ".py",
-    ".js",
-    ".jsx",
-    ".ts",
-    ".tsx",
-    ".java",
-    ".cpp",
-    ".c",
-    ".h",
-    ".html",
-    ".css",
-    ".json",
-    ".md",
-}
-
-
-def clone_repository(repo_url):
+class RepoLoader:
     """
-    Clone a GitHub repository into a temporary folder.
+    Clones a public GitHub repository and reads supported source-code files.
     """
 
-    temp_dir = tempfile.mkdtemp()
+    SUPPORTED_EXTENSIONS = {
+        ".py",
+        ".js",
+        ".jsx",
+        ".ts",
+        ".tsx",
+        ".java",
+        ".cpp",
+        ".c",
+        ".h",
+        ".hpp",
+        ".html",
+        ".css",
+        ".json",
+        ".md",
+        ".yml",
+        ".yaml",
+        ".xml",
+        ".sql",
+        ".sh",
+    }
 
-    try:
-        Repo.clone_from(repo_url, temp_dir)
-        return temp_dir
+    IGNORED_DIRECTORIES = {
+        ".git",
+        "node_modules",
+        "__pycache__",
+        ".venv",
+        "venv",
+        "env",
+        "dist",
+        "build",
+        ".idea",
+        ".vscode",
+    }
 
-    except Exception as e:
-        shutil.rmtree(temp_dir, ignore_errors=True)
-        raise Exception(f"Failed to clone repository: {str(e)}")
+    def __init__(self):
+        self.temp_dir = None
 
+    def clone_repository(self, repo_url):
+        """
+        Clone the GitHub repository into a temporary directory.
+        """
 
-def load_repository_files(repo_path):
-    """
-    Read all supported code files from the repository.
-    """
+        if not repo_url or not repo_url.strip():
+            raise ValueError("Repository URL cannot be empty.")
 
-    documents = []
+        self.temp_dir = tempfile.mkdtemp(prefix="creatix_repo_")
 
-    for root, dirs, files in os.walk(repo_path):
+        repo_path = os.path.join(
+            self.temp_dir,
+            "repository"
+        )
 
-        # Ignore unnecessary large folders
-        dirs[:] = [
-            directory
-            for directory in dirs
-            if directory not in {
-                ".git",
-                "node_modules",
-                "__pycache__",
-                ".venv",
-                "venv",
-            }
-        ]
+        try:
+            subprocess.run(
+                [
+                    "git",
+                    "clone",
+                    "--depth",
+                    "1",
+                    repo_url,
+                    repo_path,
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
 
-        for file in files:
+            return repo_path
 
-            extension = os.path.splitext(file)[1].lower()
+        except subprocess.TimeoutExpired:
+            self.cleanup()
 
-            if extension in SUPPORTED_EXTENSIONS:
+            raise RuntimeError(
+                "Repository cloning timed out."
+            )
 
-                file_path = os.path.join(root, file)
+        except subprocess.CalledProcessError as e:
+            self.cleanup()
+
+            error_message = e.stderr.strip()
+
+            raise RuntimeError(
+                f"Failed to clone repository: {error_message}"
+            )
+
+    def load_files(self, repo_path):
+        """
+        Read supported source-code files from the cloned repository.
+        """
+
+        documents = []
+
+        for root, dirs, files in os.walk(repo_path):
+
+            dirs[:] = [
+                directory
+                for directory in dirs
+                if directory not in self.IGNORED_DIRECTORIES
+            ]
+
+            for filename in files:
+
+                extension = os.path.splitext(
+                    filename
+                )[1].lower()
+
+                if extension not in self.SUPPORTED_EXTENSIONS:
+                    continue
+
+                full_path = os.path.join(
+                    root,
+                    filename
+                )
+
+                relative_path = os.path.relpath(
+                    full_path,
+                    repo_path
+                )
 
                 try:
                     with open(
-                        file_path,
+                        full_path,
                         "r",
                         encoding="utf-8",
                         errors="ignore",
-                    ) as f:
+                    ) as file:
+                        content = file.read()
 
-                        content = f.read()
-
-                    relative_path = os.path.relpath(
-                        file_path,
-                        repo_path,
-                    )
-
-                    documents.append(
-                        {
-                            "file_path": relative_path,
-                            "content": content,
-                        }
-                    )
+                    if content.strip():
+                        documents.append(
+                            {
+                                "path": relative_path,
+                                "content": content,
+                            }
+                        )
 
                 except Exception as e:
-                    print(f"Could not read {file_path}: {e}")
+                    print(
+                        f"Skipping {relative_path}: {e}"
+                    )
 
-    return documents
-
-
-def load_github_repository(repo_url):
-    """
-    Complete process:
-    Clone repository -> Read files -> Delete temporary repository
-    """
-
-    repo_path = clone_repository(repo_url)
-
-    try:
-        documents = load_repository_files(repo_path)
         return documents
 
-    finally:
-        shutil.rmtree(repo_path, ignore_errors=True)
+    def load_repository(self, repo_url):
+        """
+        Clone repository and return readable documents.
+        """
+
+        repo_path = self.clone_repository(repo_url)
+
+        documents = self.load_files(repo_path)
+
+        if not documents:
+            raise ValueError(
+                "No supported source-code files were found."
+            )
+
+        return documents
+
+    def cleanup(self):
+        """
+        Delete the temporary cloned repository.
+        """
+
+        if (
+            self.temp_dir
+            and os.path.exists(self.temp_dir)
+        ):
+            shutil.rmtree(
+                self.temp_dir,
+                ignore_errors=True
+            )
+
+            self.temp_dir = None
