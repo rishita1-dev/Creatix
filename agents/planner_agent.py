@@ -1,7 +1,7 @@
 import os
 import json
 from dotenv import load_dotenv
-from google import genai
+import google.generativeai as genai
 
 
 load_dotenv()
@@ -29,7 +29,7 @@ class PlannerAgent:
                 "GEMINI_API_KEY not found in .env file."
             )
 
-        self.client = genai.Client(api_key=api_key)
+        self.model = genai.GenerativeModel("gemini-3.5-flash")
 
 
     def create_plan(self, user_prompt, repo_url=None):
@@ -73,10 +73,7 @@ Return ONLY valid JSON in exactly this format:
 }}
 """
 
-        response = self.client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt
-        )
+        response = self.model.generate_content(prompt)
 
         response_text = response.text.strip()
 
