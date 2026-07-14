@@ -122,3 +122,91 @@ Rules:
             )
 
         return review
+    
+    def _revise_response(
+        self,
+        user_prompt,
+        task,
+        original_response,
+        revision_instructions,
+        conversation_context=None,
+    ):
+        """
+        Revise an agent response using the reviewer's instructions.
+        """
+
+        revision_prompt = f"""
+            You are the Revision Agent for Creatix,
+            an autonomous coding assistant.
+
+            Your job is to improve an AI-generated response based on
+            specific reviewer feedback.
+
+            Original user request:
+            {user_prompt}
+
+            Selected task:
+            {task}
+
+            Original agent response:
+            {original_response}
+
+            Revision instructions:
+            {revision_instructions}
+
+            Conversation context:
+            {conversation_context or "No additional conversation context provided."}
+
+            Generate an improved final response that:
+
+            1. Fixes all issues identified by the reviewer.
+            2. Fully addresses the user's original request.
+            3. Is technically accurate.
+            4. Is clear and complete.
+            5. Preserves correct parts of the original response.
+
+            Return ONLY the improved response.
+            """
+
+        gemini_response = self.model.generate_content(
+            revision_prompt
+        )
+
+        return gemini_response.text.strip()
+    
+    def review_and_revise(
+        self,
+        user_prompt,
+        task,
+        original_response,
+        conversation_context=None,
+    ):
+        """
+        Review the original response and revise it if necessary.
+        """
+
+        review = self.review(
+            user_prompt=user_prompt,
+            task=task,
+            response=original_response,
+        )
+
+        if review["approved"]:
+            final_response = original_response
+
+        else:
+            final_response = self._revise_response(
+                user_prompt=user_prompt,
+                task=task,
+                original_response=original_response,
+                revision_instructions=review[
+                    "revision_instructions"
+                ],
+                conversation_context=conversation_context,
+            )
+
+        return {
+            "original_response": original_response,
+            "review": review,
+            "final_response": final_response,
+        }
