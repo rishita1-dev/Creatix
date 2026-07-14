@@ -63,14 +63,13 @@ prompt = st.text_area(
 # --------------------------------------------------
 
 repo_url = st.text_input(
-    "Repository URL (Optional)",
+    "Repository URL (Optional for most tasks, required for repository review and RAG)",
     placeholder=(
         "https://github.com/username/repository"
     )
 )
 
 st.markdown("---")
-
 
 # --------------------------------------------------
 # Submit Button
@@ -85,31 +84,32 @@ if st.button(
     # Validate prompt
     # ----------------------------------------------
 
-    if not prompt.strip():
+        if (
+            task not in [
+                "Review GitHub Repository"
+            ]
+            and not prompt.strip()
+        ):
 
-        st.warning(
-            "Please enter a prompt."
-        )
+            st.warning("Please enter a prompt.")
+            st.stop()
 
+        # ----------------------------------------------
+        # Validate repository URL
+        # ----------------------------------------------
 
-    # ----------------------------------------------
-    # Validate repository URL
-    # ----------------------------------------------
+        if (
+            task in [
+                "Review GitHub Repository",
+                "Repository Q&A (RAG)"
+            ]
+            and not repo_url.strip()
+        ):
 
-    elif (
-        task in [
-            "Review GitHub Repository",
-            "Repository Q&A (RAG)"
-        ]
-        and not repo_url.strip()
-    ):
-
-        st.warning(
-            "Please enter a GitHub Repository URL."
-        )
-
-
-    else:
+            st.warning(
+                "Please enter a GitHub Repository URL."
+            )
+            st.stop()
 
         try:
 
@@ -130,6 +130,8 @@ if st.button(
                     },
                     timeout=300
                 )
+
+        # Rest of your code remains exactly the same...
 
 
             # --------------------------------------

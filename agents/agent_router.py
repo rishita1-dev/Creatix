@@ -11,6 +11,10 @@ from agents.code_generator import generate_code
 from agents.code_explainer import explain_code
 from agents.code_debugger import debug_code
 from agents.github_reviewer import review_repository
+from github_tools.github_api import (
+    get_repository,
+    get_repository_content
+)
 
 
 # --------------------------------------------------
@@ -188,13 +192,27 @@ class AgentRouter:
             if not repo_url or not repo_url.strip():
 
                 raise ValueError(
-                    "Repository URL is required "
-                    "for repository review."
+                    "Repository URL is required for repository review."
                 )
 
+            clean_url = repo_url.strip()
+
+            # Convert URL into owner/repo
+            repo_name = clean_url.replace(
+                "https://github.com/",
+                ""
+            ).strip("/")
+
+            # Fetch repository object
+            repo = get_repository(repo_name)
+
+            # Read repository
+            repository_text = get_repository_content(repo)
+
+            # Ask Gemini to review it
             return review_repository(
-                user_prompt,
-                repo_url.strip()
+                repository_text,
+                user_prompt
             )
 
 

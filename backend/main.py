@@ -1,7 +1,6 @@
 import sys
 import os
 
-
 # --------------------------------------------------
 # Add project root to Python path
 # --------------------------------------------------
@@ -88,7 +87,15 @@ def generate(request: PromptRequest):
         # Basic validation
         # ------------------------------------------
 
-        if not request.prompt.strip():
+        # ------------------------------------------
+# Basic validation
+# ------------------------------------------
+
+# Prompt is required for all tasks except Repository Review
+        if (
+            request.task != "Review GitHub Repository"
+            and not request.prompt.strip()
+        ):
 
             return {
                 "success": False,
