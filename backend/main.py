@@ -51,8 +51,12 @@ pipeline = CreatixPipeline()
 class PromptRequest(BaseModel):
 
     task: str
+
     prompt: str = ""
+
     repo_url: Optional[str] = None
+
+    conversation_context: Optional[str] = None
 
 
 # --------------------------------------------------
@@ -126,7 +130,11 @@ def generate(request: PromptRequest):
         result = pipeline.run(
             task_type=request.task,
             user_prompt=request.prompt,
-            repo_url=request.repo_url
+            repo_url=request.repo_url,
+            conversation_context=(
+                request.conversation_context
+                or ""
+            )
         )
 
 

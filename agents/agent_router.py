@@ -12,6 +12,11 @@ from agents.code_explainer import explain_code
 from agents.code_debugger import debug_code
 from agents.github_reviewer import review_repository
 
+from github_tools.github_api import (
+    get_repository,
+    get_repository_content
+)
+
 
 # --------------------------------------------------
 # Load environment variables
@@ -55,13 +60,34 @@ class AgentRouter:
         self,
         task_type,
         user_prompt,
-        repo_url=None
+        repo_url=None,
+        conversation_context=""
     ):
         """
         Route the request, execute the correct agent,
         review the response, and revise it if necessary.
         """
+        if conversation_context.strip():
 
+            contextual_prompt = f"""
+        Previous conversation context:
+
+        {conversation_context}
+
+        Current user request:
+
+        {user_prompt}
+
+        Use the previous conversation only when it is relevant
+        to understanding the current request.
+
+        Do not mention the previous conversation unless necessary.
+        Answer the current request directly.
+        """
+
+        else:
+
+            contextual_prompt = user_prompt
         # ----------------------------------------------
         # Step 1: Determine task
         # ----------------------------------------------
@@ -69,8 +95,9 @@ class AgentRouter:
         if task_type == "Auto":
 
             plan = self.planner.create_plan(
-                user_prompt=user_prompt,
-                repo_url=repo_url
+                user_prompt=contextual_prompt,
+                repo_url=repo_url,
+                
             )
 
             task = plan["task"]
@@ -96,7 +123,7 @@ class AgentRouter:
 
         original_response = self._execute_task(
             task=task,
-            user_prompt=user_prompt,
+            user_prompt=contextual_prompt,
             repo_url=repo_url
         )
 
@@ -188,15 +215,25 @@ class AgentRouter:
             if not repo_url or not repo_url.strip():
 
                 raise ValueError(
-                    "Repository URL is required "
-                    "for repository review."
+                    "Repository URL is required for repository review."
                 )
 
-            return review_repository(
-                user_prompt,
-                repo_url.strip()
-            )
+            clean_url = repo_url.strip()
 
+            # Convert URL into owner/repo
+            repo_name = clean_url.replace(
+                "https://github.com/",
+                ""
+            ).strip("/")
+
+            # Fetch repository object
+            repo = get_repository(repo_name)
+
+            # Read repository
+            repository_text = get_repository_content(repo)
+
+            # Ask Gemini to review it
+            return review_repository(repository_text)
 
         elif task == "Repository Q&A (RAG)":
 
@@ -243,12 +280,15 @@ class AgentRouter:
         user_prompt,
         task,
         original_response,
-        revision_instructions
+        revision_instructions,
+        conversation_context=""
     ):
 
         revision_prompt = f"""
 You are the Revision Agent for Creatix,
 an autonomous AI coding assistant.
+Previous conversation context:
+{conversation_context}
 
 Original user request:
 {user_prompt}

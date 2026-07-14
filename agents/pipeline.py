@@ -16,7 +16,8 @@ class CreatixPipeline:
         self,
         task_type,
         user_prompt,
-        repo_url=None
+        repo_url=None,
+        conversation_context=""
     ):
         """
         Run the complete Creatix multi-agent workflow.
@@ -45,7 +46,8 @@ class CreatixPipeline:
             result = self.router.route(
                 task_type=task_type,
                 user_prompt=user_prompt,
-                repo_url=repo_url
+                repo_url=repo_url,
+                conversation_context=conversation_context
             )
 
             return {
