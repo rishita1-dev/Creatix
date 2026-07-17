@@ -1,0 +1,103 @@
+/* ---------- Warm Orange/Peach Theme for Creatix ---------- */
+
+.stApp {
+    background: linear-gradient(180deg, #FFF8F0 0%, #FFF3E4 100%);
+}
+
+h1, h2, h3, h4 {
+    color: #4A3F35 !important;
+}
+
+/* Sidebar */
+section[data-testid="stSidebar"] {
+    background-color: #FFEEDD;
+    border-right: 1px solid #F4D9B4;
+}
+
+/* Nav radio -> sidebar menu look */
+div[role="radiogroup"] label {
+    padding: 8px 12px;
+    border-radius: 10px;
+    width: 100%;
+}
+
+div[role="radiogroup"] label:has(input:checked) {
+    background-color: #F4A261;
+}
+
+div[role="radiogroup"] label:has(input:checked) p {
+    color: white !important;
+    font-weight: 600;
+}
+
+/* Feature / task cards */
+.creatix-card {
+    background-color: #FFFFFF;
+    border-radius: 16px;
+    padding: 20px 24px;
+    box-shadow: 0 4px 14px rgba(244, 162, 97, 0.15);
+    border: 1px solid #FCE4CC;
+    margin-bottom: 16px;
+}
+
+.creatix-card h3 {
+    margin-top: 0;
+}
+
+.creatix-badge {
+    display: inline-block;
+    background-color: #FFD9A0;
+    color: #6B4A2B;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+/* Buttons */
+.stButton>button {
+    background-color: #F4A261;
+    color: white;
+    border-radius: 10px;
+    border: none;
+    padding: 0.55em 1.4em;
+    font-weight: 600;
+    transition: all 0.2s ease-in-out;
+}
+
+.stButton>button:hover {
+    background-color: #E76F51;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(231, 111, 81, 0.35);
+}
+
+/* Text areas / inputs */
+.stTextArea textarea, .stTextInput input {
+    border-radius: 10px !important;
+    border: 1px solid #F4D9B4 !important;
+    background-color: #FFFDF9 !important;
+}
+
+/* Code blocks */
+.stCodeBlock, pre {
+    border-radius: 12px;
+    border: 1px solid #F4D9B4;
+}
+
+/* Alert boxes */
+div[data-testid="stAlert"] {
+    border-radius: 12px;
+}
+
+/* Expanders (history) */
+div[data-testid="stExpander"] {
+    border: 1px solid #F4D9B4;
+    border-radius: 12px;
+    background-color: #FFFDF9;
+}
+
+hr {
+    border-color: #F4D9B4 !important;
+}
