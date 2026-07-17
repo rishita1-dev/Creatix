@@ -14,7 +14,7 @@ section[data-testid="stSidebar"] {
     border-right: 1px solid #F4D9B4;
 }
 
-/* Nav radio -> sidebar menu look */
+/* Nav radio -> sidebar menu look (task pages only) */
 div[role="radiogroup"] label {
     padding: 8px 12px;
     border-radius: 10px;
@@ -28,6 +28,29 @@ div[role="radiogroup"] label:has(input:checked) {
 div[role="radiogroup"] label:has(input:checked) p {
     color: white !important;
     font-weight: 600;
+}
+
+/* Home / History nav bars: distinct pill-style buttons, not radio items */
+section[data-testid="stSidebar"] button[kind="secondary"] {
+    background-color: transparent;
+    color: #4A3F35;
+    border: 1px solid #F4D9B4;
+    text-align: left;
+    justify-content: flex-start;
+    box-shadow: none;
+    font-weight: 500;
+}
+
+section[data-testid="stSidebar"] button[kind="secondary"]:hover {
+    background-color: #FCE4CC;
+    color: #4A3F35;
+    transform: none;
+    box-shadow: none;
+}
+
+section[data-testid="stSidebar"] button[kind="primary"] {
+    text-align: left;
+    justify-content: flex-start;
 }
 
 /* Feature / task cards */

@@ -51,15 +51,19 @@ PLACEHOLDERS = {
     "🔍 Repository Q&A": "Example: What does pipeline.py do?",
 }
 
-NAV_OPTIONS = [
-    "🏠 Home",
+HOME_OPTION = "🏠 Home"
+HISTORY_OPTION = "💬 History"
+
+TASK_OPTIONS = [
     "💻 Generate Code",
     "📖 Explain Code",
     "🐞 Debug Code",
     "📂 Review GitHub Repo",
     "🔍 Repository Q&A",
-    "💬 History",
 ]
+
+# Kept for backward-compatible reference to "every page label"
+NAV_OPTIONS = [HOME_OPTION] + TASK_OPTIONS + [HISTORY_OPTION]
 
 
 # --------------------------------------------------
@@ -70,7 +74,15 @@ if "history" not in st.session_state:
     st.session_state.history = []
 
 if "page" not in st.session_state:
-    st.session_state.page = "🏠 Home"
+    st.session_state.page = HOME_OPTION
+
+
+def set_page(target):
+    """Navigate to `target` and keep the task radio in sync with it."""
+    st.session_state.page = target
+    # Only highlight the radio group when the target is one of the task
+    # pages; clear its selection when Home/History (their own bars) are picked.
+    st.session_state.nav_radio = target if target in TASK_OPTIONS else None
 
 
 # --------------------------------------------------
@@ -83,17 +95,49 @@ with st.sidebar:
     st.caption("Autonomous AI Coding Assistant")
     st.divider()
 
-    st.session_state.page = st.radio(
+    # ---- Home bar ----
+    st.button(
+        HOME_OPTION,
+        key="nav_home_btn",
+        use_container_width=True,
+        type="primary" if st.session_state.page == HOME_OPTION else "secondary",
+        on_click=set_page,
+        args=(HOME_OPTION,),
+    )
+
+    st.divider()
+
+    # ---- Task pages bar (radio buttons) ----
+    task_index = (
+        TASK_OPTIONS.index(st.session_state.page)
+        if st.session_state.page in TASK_OPTIONS
+        else None
+    )
+    st.radio(
         "Navigate",
-        NAV_OPTIONS,
-        index=NAV_OPTIONS.index(st.session_state.page),
-        label_visibility="collapsed"
+        TASK_OPTIONS,
+        index=task_index,
+        label_visibility="collapsed",
+        key="nav_radio",
+        on_change=lambda: set_page(st.session_state.nav_radio),
+    )
+
+    st.divider()
+
+    # ---- History bar ----
+    st.button(
+        HISTORY_OPTION,
+        key="nav_history_btn",
+        use_container_width=True,
+        type="primary" if st.session_state.page == HISTORY_OPTION else "secondary",
+        on_click=set_page,
+        args=(HISTORY_OPTION,),
     )
 
     st.divider()
     st.write(f"Messages: {len(st.session_state.history)}")
 
-    if st.button("🗑️ Clear History", use_container_width=True):
+    if st.button("🗑️ Clear History", use_container_width=True, type="primary"):
         st.session_state.history = []
         st.success("Conversation history cleared.")
         st.rerun()
@@ -231,7 +275,7 @@ def run_task(page_label, prompt, repo_url=None):
 # Home Page
 # --------------------------------------------------
 
-if page == "🏠 Home":
+if page == HOME_OPTION:
 
     st.markdown("<div class='creatix-badge'>AI Coding Assistant</div>", unsafe_allow_html=True)
     st.title("Welcome to Creatix 🤖")
@@ -258,7 +302,7 @@ if page == "🏠 Home":
                 unsafe_allow_html=True
             )
             if st.button(f"Open {title}", key=f"open_{target}", use_container_width=True):
-                st.session_state.page = target
+                set_page(target)
                 st.rerun()
 
 
@@ -269,7 +313,7 @@ if page == "🏠 Home":
 elif page in TASK_MAP:
 
     st.title(page)
-    st.markdown("<div class='creatix-card'>", unsafe_allow_html=True)
+    st.divider()
 
     repo_url = None
     if page in REPO_PAGES:
@@ -286,8 +330,6 @@ elif page in TASK_MAP:
 
     submit = st.button("🚀 Submit", use_container_width=True)
 
-    st.markdown("</div>", unsafe_allow_html=True)
-
     if submit:
         run_task(page, prompt, repo_url)
 
@@ -296,7 +338,7 @@ elif page in TASK_MAP:
 # History Page
 # --------------------------------------------------
 
-elif page == "💬 History":
+elif page == HISTORY_OPTION:
 
     st.title("💬 Conversation History")
 
