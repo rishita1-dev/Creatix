@@ -3,10 +3,13 @@ import shutil
 import subprocess
 import tempfile
 
+from backend.ast_index import ASTIndex
+
 
 class RepoLoader:
     """
-    Clones a public GitHub repository and reads supported source-code files.
+    Clones a public GitHub repository, builds an AST index,
+    and reads supported source-code files.
     """
 
     SUPPORTED_EXTENSIONS = {
@@ -46,11 +49,9 @@ class RepoLoader:
 
     def __init__(self):
         self.temp_dir = None
+        self.ast_index = ASTIndex()
 
     def clone_repository(self, repo_url):
-        """
-        Clone the GitHub repository into a temporary directory.
-        """
 
         if not repo_url or not repo_url.strip():
             raise ValueError("Repository URL cannot be empty.")
@@ -63,6 +64,7 @@ class RepoLoader:
         )
 
         try:
+
             subprocess.run(
                 [
                     "git",
@@ -81,6 +83,7 @@ class RepoLoader:
             return repo_path
 
         except subprocess.TimeoutExpired:
+
             self.cleanup()
 
             raise RuntimeError(
@@ -88,58 +91,52 @@ class RepoLoader:
             )
 
         except subprocess.CalledProcessError as e:
+
             self.cleanup()
 
-            error_message = e.stderr.strip()
-
             raise RuntimeError(
-                f"Failed to clone repository: {error_message}"
+                f"Failed to clone repository: {e.stderr.strip()}"
             )
 
     def load_files(self, repo_path):
-        """
-        Read supported source-code files from the cloned repository.
-        """
 
         documents = []
 
         for root, dirs, files in os.walk(repo_path):
 
             dirs[:] = [
-                directory
-                for directory in dirs
-                if directory not in self.IGNORED_DIRECTORIES
+                d
+                for d in dirs
+                if d not in self.IGNORED_DIRECTORIES
             ]
 
             for filename in files:
 
-                extension = os.path.splitext(
-                    filename
-                )[1].lower()
+                extension = os.path.splitext(filename)[1].lower()
 
                 if extension not in self.SUPPORTED_EXTENSIONS:
                     continue
 
-                full_path = os.path.join(
-                    root,
-                    filename
-                )
+                full_path = os.path.join(root, filename)
 
                 relative_path = os.path.relpath(
                     full_path,
-                    repo_path
+                    repo_path,
                 )
 
                 try:
+
                     with open(
                         full_path,
                         "r",
                         encoding="utf-8",
                         errors="ignore",
                     ) as file:
+
                         content = file.read()
 
                     if content.strip():
+
                         documents.append(
                             {
                                 "path": relative_path,
@@ -148,6 +145,7 @@ class RepoLoader:
                         )
 
                 except Exception as e:
+
                     print(
                         f"Skipping {relative_path}: {e}"
                     )
@@ -155,11 +153,11 @@ class RepoLoader:
         return documents
 
     def load_repository(self, repo_url):
-        """
-        Clone repository and return readable documents.
-        """
 
         repo_path = self.clone_repository(repo_url)
+
+        # NEW: Build AST Index
+        self.ast_index.build(repo_path)
 
         documents = self.load_files(repo_path)
 
@@ -168,20 +166,18 @@ class RepoLoader:
                 "No supported source-code files were found."
             )
 
-        return documents
+        return {
+            "documents": documents,
+            "ast_index": self.ast_index,
+        }
 
     def cleanup(self):
-        """
-        Delete the temporary cloned repository.
-        """
 
-        if (
-            self.temp_dir
-            and os.path.exists(self.temp_dir)
-        ):
+        if self.temp_dir and os.path.exists(self.temp_dir):
+
             shutil.rmtree(
                 self.temp_dir,
-                ignore_errors=True
+                ignore_errors=True,
             )
 
             self.temp_dir = None

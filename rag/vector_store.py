@@ -7,11 +7,13 @@ class FAISSVectorStore:
     def __init__(self):
         self.index = None
         self.chunks = []
+        self.metadata = []
 
     def build_index(
         self,
         embeddings,
         chunks,
+        metadata=None,
     ):
         """
         Build a FAISS index from repository embeddings.
@@ -37,6 +39,11 @@ class FAISSVectorStore:
         self.index.add(embeddings)
 
         self.chunks = chunks
+
+        if metadata is None:
+            self.metadata = [{} for _ in chunks]
+        else:
+            self.metadata = metadata
 
     def search(
         self,
@@ -75,6 +82,7 @@ class FAISSVectorStore:
             scores[0],
             indices[0],
         ):
+
             if index == -1:
                 continue
 
@@ -82,6 +90,18 @@ class FAISSVectorStore:
 
             chunk["score"] = float(score)
 
+            if index < len(self.metadata):
+                chunk["metadata"] = self.metadata[index]
+
             results.append(chunk)
 
         return results
+
+    def clear(self):
+        """
+        Clears the FAISS index.
+        """
+
+        self.index = None
+        self.chunks = []
+        self.metadata = []

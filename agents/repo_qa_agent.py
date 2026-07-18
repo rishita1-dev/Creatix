@@ -1,4 +1,5 @@
 import os
+import re
 from dotenv import load_dotenv
 import google.generativeai as genai
 
@@ -12,7 +13,8 @@ load_dotenv()
 
 class RepoQAAgent:
     """
-    Repository Question Answering Agent using RAG.
+    Repository Question Answering Agent using
+    AST + RAG.
     """
 
     def __init__(self):
@@ -31,6 +33,7 @@ class RepoQAAgent:
         self.embeddings = GeminiEmbeddings()
         self.vector_store = FAISSVectorStore()
 
+        self.ast_index = None
         self.current_repo = None
 
     def load_repository(self, repo_url):
@@ -39,7 +42,10 @@ class RepoQAAgent:
         print("Loading Repository...")
         print("=" * 60)
 
-        documents = self.repo_loader.load_repository(repo_url)
+        repo_data = self.repo_loader.load_repository(repo_url)
+
+        documents = repo_data["documents"]
+        self.ast_index = repo_data["ast_index"]
 
         print(f"Loaded {len(documents)} files")
 
@@ -72,10 +78,83 @@ class RepoQAAgent:
 
         print("Repository Ready!")
 
+        print("\n========== AST DEBUG ==========")
+
+        print("Function names in AST:")
+        print(list(self.ast_index.function_index.keys()))
+
+        print("\nClass names in AST:")
+        print(list(self.ast_index.class_index.keys()))
+
+        print("===============================\n")
+
         return {
             "files_loaded": len(documents),
-            "chunks_created": len(chunks)
+            "chunks_created": len(chunks),
+            "functions": len(self.ast_index.function_index),
+            "classes": len(self.ast_index.class_index),
         }
+
+    # ----------------------------------------------------
+    # AST LOOKUP
+    # ----------------------------------------------------
+
+    def ast_lookup(self, question):
+
+        if self.ast_index is None:
+            return None
+
+        question_lower = question.lower()
+
+        match = re.search(
+            r"(function|method)\s+([A-Za-z_][A-Za-z0-9_]*)",
+            question_lower,
+        )
+
+        if match:
+
+            function_name = match.group(2)
+
+            result = self.ast_index.get_function(
+                function_name
+            )
+
+            if result:
+
+                return (
+                    f"Function '{function_name}' "
+                    f"is defined in\n\n"
+                    f"{result['file']}\n\n"
+                    f"Line {result['data']['line']}"
+                )
+
+        match = re.search(
+            r"class\s+([A-Za-z_][A-Za-z0-9_]*)",
+            question_lower,
+        )
+
+        if match:
+
+            class_name = match.group(1)
+
+            result = self.ast_index.get_class(
+                class_name
+            )
+
+            if result:
+
+                return (
+                    f"Class '{class_name}' "
+                    f"is defined in\n\n"
+                    f"{result['file']}\n\n"
+                    f"Line {result['data']['line']}"
+                )
+
+        return None
+
+    # ----------------------------------------------------
+    # ASK
+    # ----------------------------------------------------
 
     def ask(self, question, top_k=5):
 
@@ -83,6 +162,13 @@ class RepoQAAgent:
             raise ValueError(
                 "Repository has not been loaded yet."
             )
+
+        # FIRST TRY AST
+        ast_answer = self.ast_lookup(question)
+        
+
+        if ast_answer:
+            return ast_answer
 
         print("Searching repository...")
 
@@ -125,8 +211,8 @@ Question:
 
 {question}
 
-Answer the question clearly.
-Mention file names whenever appropriate.
+Answer clearly.
+Mention filenames.
 Do not hallucinate.
 """
 

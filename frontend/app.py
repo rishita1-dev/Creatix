@@ -81,8 +81,15 @@ def set_page(target):
     """Navigate to `target` and keep the task radio in sync with it."""
     st.session_state.page = target
     # Only highlight the radio group when the target is one of the task
-    # pages; clear its selection when Home/History (their own bars) are picked.
-    st.session_state.nav_radio = target if target in TASK_OPTIONS else None
+    # pages. Streamlit does not allow assigning None directly to a radio's
+    # session_state value (None is only valid as the `index` constructor
+    # arg), so to clear the selection when Home/History is picked, we
+    # remove the key entirely -- the widget then falls back to index=None
+    # (nothing selected) on its next render.
+    if target in TASK_OPTIONS:
+        st.session_state.nav_radio = target
+    else:
+        st.session_state.pop("nav_radio", None)
 
 
 # --------------------------------------------------
@@ -301,9 +308,13 @@ if page == HOME_OPTION:
                 f"<div class='creatix-card'><h3>{icon} {title}</h3><p>{desc}</p></div>",
                 unsafe_allow_html=True
             )
-            if st.button(f"Open {title}", key=f"open_{target}", use_container_width=True):
-                set_page(target)
-                st.rerun()
+            st.button(
+                f"Open {title}",
+                key=f"open_{target}",
+                use_container_width=True,
+                on_click=set_page,
+                args=(target,),
+            )
 
 
 # --------------------------------------------------
