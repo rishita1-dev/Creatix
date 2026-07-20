@@ -31,7 +31,7 @@ load_css()
 # Constants
 # --------------------------------------------------
 
-BACKEND_URL = "https://creatix-backend-y8oh.onrender.com"
+BACKEND_URL = "https://creatix-backend-y8oh.onrender.com/generate"
 
 TASK_MAP = {
     "💻 Generate Code": "Generate Code",
