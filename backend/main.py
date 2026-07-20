@@ -18,6 +18,7 @@ from typing import Optional
 
 from fastapi import FastAPI
 from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
 
 from agents.pipeline import CreatixPipeline
 
@@ -33,6 +34,14 @@ app = FastAPI(
         "AI Coding Assistant"
     ),
     version="1.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],   # later you can restrict this to your Streamlit URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
