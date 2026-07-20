@@ -16,7 +16,6 @@ nest-asyncio==1.6.0
 packaging==25.0
 parso==0.8.4
 pillow==11.2.1
-Pillow-PIL==0.1.dev0
 platformdirs==4.3.7
 prompt_toolkit==3.0.51
 psutil==7.0.0
