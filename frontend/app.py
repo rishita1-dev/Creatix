@@ -34,6 +34,7 @@ load_css()
 BACKEND_URL = "https://creatix-backend-y8oh.onrender.com/generate"
 
 TASK_MAP = {
+    "✨ Auto": "Auto",
     "💻 Generate Code": "Generate Code",
     "📖 Explain Code": "Explain Code",
     "🐞 Debug Code": "Debug Code",
@@ -41,9 +42,10 @@ TASK_MAP = {
     "🔍 Repository Q&A": "Repository Q&A (RAG)",
 }
 
-REPO_PAGES = ["📂 Review GitHub Repo", "🔍 Repository Q&A"]
+REPO_PAGES = ["✨ Auto","📂 Review GitHub Repo", "🔍 Repository Q&A"]
 
 PLACEHOLDERS = {
+    "✨ Auto": "Describe what you want. Creatix will automatically decide the best task.",
     "💻 Generate Code": "Example: Write a Python program to check whether a string is a palindrome.",
     "📖 Explain Code": "Paste the code you want explained...",
     "🐞 Debug Code": "Paste your code and error message here...",
@@ -55,6 +57,7 @@ HOME_OPTION = "🏠 Home"
 HISTORY_OPTION = "💬 History"
 
 TASK_OPTIONS = [
+    "✨ Auto",
     "💻 Generate Code",
     "📖 Explain Code",
     "🐞 Debug Code",
@@ -204,9 +207,10 @@ def run_task(page_label, prompt, repo_url=None):
     # ----------------------------------------------
     # Validate repository URL
     # ----------------------------------------------
-    if page_label in REPO_PAGES and (not repo_url or not repo_url.strip()):
-        st.warning("Please enter a GitHub Repository URL.")
-        st.stop()
+    if page_label in ["📂 Review GitHub Repo", "🔍 Repository Q&A"]:
+        if not repo_url or not repo_url.strip():
+            st.warning("Please enter a GitHub Repository URL.")
+            st.stop()
 
     try:
         conversation_context = build_conversation_context(st.session_state.history)
@@ -293,6 +297,7 @@ if page == HOME_OPTION:
     st.divider()
 
     features = [
+        ("✨", "Auto", "Describe what you want. Creatix will automatically decide the best task.","✨ Auto"),
         ("💻", "Generate Code", "Turn plain instructions into working code.", "💻 Generate Code"),
         ("📖", "Explain Code", "Understand what any snippet does, in plain English.", "📖 Explain Code"),
         ("🐞", "Debug Code", "Find and fix errors in your code fast.", "🐞 Debug Code"),
