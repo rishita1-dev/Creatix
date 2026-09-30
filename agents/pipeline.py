@@ -19,17 +19,20 @@ class CreatixPipeline:
         repo_url=None,
         conversation_context=""
     ):
+        repository_text= None
+        
         """
         Run the complete Creatix multi-agent workflow.
 
         Parameters:
-            task_type:
-                Auto,
-                Generate Code,
-                Explain Code,
-                Debug Code,
-                Review GitHub Repository,
-                Repository Q&A (RAG)
+        task_type:
+            Auto,
+            Innovation Analysis,
+            Generate Code,
+            Explain Code,
+            Debug Code,
+            Review GitHub Repository,
+            Repository Q&A (RAG)
 
             user_prompt:
                 User's coding request or question.

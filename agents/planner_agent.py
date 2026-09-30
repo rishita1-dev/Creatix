@@ -14,6 +14,7 @@ class PlannerAgent:
     """
 
     VALID_TASKS = [
+        "Innovation Analysis"
         "Generate Code",
         "Explain Code",
         "Debug Code",
@@ -54,23 +55,40 @@ Creatix helps students:
 - discover opportunities for further innovation
 
 Available tasks:
+1. Innovation Analysis
+   Use when the student describes an idea, problem, prototype,
+   technology concept, or innovation and wants to understand:
 
-1. Generate Code
+   - the problem
+   - relevant technologies
+   - existing technological resources
+   - how existing resources can be reused or adapted
+   - valuable technical insights
+   - possible improvements
+   - possible innovation opportunities
+   - a suggested development path
+
+If the user's request is about developing a new idea or innovation
+and they are asking for guidance rather than directly asking for
+code, select "Innovation Analysis".
+
+
+2. Generate Code
 Use when the user wants to build a solution, prototype, feature, function,
 application, or implementation.
 
-2. Explain Code
+3. Explain Code
 Use when the user wants to understand existing code or technology.
 
-3. Debug Code
+4. Debug Code
 Use when the user wants to identify and fix errors or improve broken code.
 
-4. Review GitHub Repository
+5. Review GitHub Repository
 Use when the user wants to explore an existing repository, understand its
 structure, evaluate its implementation, identify reusable components, or
 discover possible improvements.
 
-5. Repository Q&A (RAG)
+6. Repository Q&A (RAG)
 Use when the user asks a specific question about an existing repository or
 wants knowledge extracted from its codebase.
 

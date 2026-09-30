@@ -6,7 +6,7 @@ import google.generativeai as genai
 from agents.planner_agent import PlannerAgent
 from agents.repo_qa_agent import RepoQAAgent
 from agents.reviewer_agent import ReviewerAgent
-
+from agents.innovation_agent import analyze_innovation
 from agents.code_generator import generate_code
 from agents.code_explainer import explain_code
 from agents.code_debugger import debug_code
@@ -194,8 +194,12 @@ class AgentRouter:
         user_prompt,
         repo_url=None
     ):
-
-        if task == "Generate Code":
+        if task == "Innovation Analysis":
+            return analyze_innovation(
+                user_prompt,
+            )
+        
+        elif task == "Generate Code":
 
             return generate_code(user_prompt)
 
