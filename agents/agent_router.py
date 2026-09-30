@@ -233,7 +233,10 @@ class AgentRouter:
             repository_text = get_repository_content(repo)
 
             # Ask Gemini to review it
-            return review_repository(repository_text)
+            return review_repository(
+                repository_text,
+                user_prompt
+            )
 
         elif task == "Repository Q&A (RAG)":
 

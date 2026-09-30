@@ -34,32 +34,38 @@ load_css()
 BACKEND_URL = "https://creatix-backend-y8oh.onrender.com/generate"
 
 TASK_MAP = {
-    "💻 Generate Code": "Generate Code",
-    "📖 Explain Code": "Explain Code",
-    "🐞 Debug Code": "Debug Code",
-    "📂 Review GitHub Repo": "Review GitHub Repository",
-    "🔍 Repository Q&A": "Repository Q&A (RAG)",
+    "💡 Innovation Mode": "Auto",
+    "🛠️ Build Solution": "Generate Code",
+    "📖 Understand Technology": "Explain Code",
+    "🔧 Improve Solution": "Debug Code",
+    "📂 Explore GitHub Resources": "Review GitHub Repository",
+    "🔍 Extract Repository Knowledge": "Repository Q&A (RAG)",
 }
 
-REPO_PAGES = ["📂 Review GitHub Repo", "🔍 Repository Q&A"]
+REPO_PAGES = [
+    "📂 Explore GitHub Resources",
+    "🔍 Extract Repository Knowledge"
+]
 
 PLACEHOLDERS = {
-    "💻 Generate Code": "Example: Write a Python program to check whether a string is a palindrome.",
-    "📖 Explain Code": "Paste the code you want explained...",
-    "🐞 Debug Code": "Paste your code and error message here...",
-    "📂 Review GitHub Repo": "Example: Review this repository and identify code quality issues.",
-    "🔍 Repository Q&A": "Example: What does pipeline.py do?",
+    "💡 Innovation Mode": "Example: I want to develop an AI system for detecting potholes using mobile cameras.",
+    "🛠️ Build Solution": "Describe the solution or feature you want to build.",
+    "📖 Understand Technology": "Paste the code or technology you want explained...",
+    "🔧 Improve Solution": "Paste your code and error message here...",
+    "📂 Explore GitHub Resources": "Optional: Tell Creatix what you want to focus on while reviewing this repository.",
+    "🔍 Extract Repository Knowledge": "Example: What technologies are used in this repository and which components could be reused?",
 }
 
 HOME_OPTION = "🏠 Home"
 HISTORY_OPTION = "💬 History"
 
 TASK_OPTIONS = [
-    "💻 Generate Code",
-    "📖 Explain Code",
-    "🐞 Debug Code",
-    "📂 Review GitHub Repo",
-    "🔍 Repository Q&A",
+    "💡 Innovation Mode",
+    "🛠️ Build Solution",
+    "📖 Understand Technology",
+    "🔧 Improve Solution",
+    "📂 Explore GitHub Resources",
+    "🔍 Extract Repository Knowledge",
 ]
 
 # Kept for backward-compatible reference to "every page label"
@@ -99,7 +105,7 @@ def set_page(target):
 with st.sidebar:
 
     st.markdown("## 🤖 Creatix")
-    st.caption("Autonomous AI Coding Assistant")
+    st.caption("AI-Powered Student Innovation Platform")
     st.divider()
 
     # ---- Home bar ----
@@ -284,21 +290,61 @@ def run_task(page_label, prompt, repo_url=None):
 
 if page == HOME_OPTION:
 
-    st.markdown("<div class='creatix-badge'>AI Coding Assistant</div>", unsafe_allow_html=True)
-    st.title("Welcome to Creatix 🤖")
-    st.write(
-        "Generate, explain, debug and review code, and ask questions about any "
-        "GitHub repo using RAG."
+    st.markdown(
+        "<div class='creatix-badge'>AI-Powered Student Innovation Platform</div>",
+        unsafe_allow_html=True
     )
+
+    st.title("Welcome to Creatix 🤖")
+
+    st.subheader("Explore • Understand • Build • Innovate")
+
+    st.write(
+        "Creatix uses AI to help students explore existing technological "
+        "resources, extract useful insights, build solutions, and improve "
+        "their innovations."
+    )
+
     st.divider()
 
     features = [
-        ("💻", "Generate Code", "Turn plain instructions into working code.", "💻 Generate Code"),
-        ("📖", "Explain Code", "Understand what any snippet does, in plain English.", "📖 Explain Code"),
-        ("🐞", "Debug Code", "Find and fix errors in your code fast.", "🐞 Debug Code"),
-        ("📂", "Review GitHub Repos", "Get an AI walkthrough of any repository.", "📂 Review GitHub Repo"),
-        ("🔍", "Repository Q&A", "Ask questions about a codebase using RAG.", "🔍 Repository Q&A"),
-    ]
+    (
+        "💡",
+        "Innovation Mode",
+        "Turn an idea into an AI-guided innovation and development path.",
+        "💡 Innovation Mode"
+    ),
+    (
+        "🛠️",
+        "Build Solution",
+        "Turn an idea or requirement into working code.",
+        "🛠️ Build Solution"
+    ),
+    (
+        "📖",
+        "Understand Technology",
+        "Understand existing code and technologies in simple language.",
+        "📖 Understand Technology"
+    ),
+    (
+        "🔧",
+        "Improve Solution",
+        "Find bugs and improve existing implementations.",
+        "🔧 Improve Solution"
+    ),
+    (
+        "📂",
+        "Explore GitHub Resources",
+        "Analyze existing repositories and identify reusable resources.",
+        "📂 Explore GitHub Resources"
+    ),
+    (
+        "🔍",
+        "Extract Repository Knowledge",
+        "Use RAG to extract useful knowledge from existing codebases.",
+        "🔍 Extract Repository Knowledge"
+    ),
+]
 
     cols = st.columns(3)
 

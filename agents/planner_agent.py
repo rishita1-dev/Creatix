@@ -38,26 +38,60 @@ class PlannerAgent:
         """
 
         prompt = f"""
-You are the Planner Agent for Creatix, an autonomous coding assistant.
+You are the Planner Agent for Creatix, an AI-powered Student Innovation Platform.
 
-Analyze the user's request and decide which specialized agent should handle it.
+Your job is to understand the student's request and select the most appropriate
+existing Creatix capability.
+
+Creatix helps students:
+
+- explore existing technological resources
+- understand technologies and code
+- identify reusable components
+- build prototypes and solutions
+- debug and improve solutions
+- extract knowledge from repositories
+- discover opportunities for further innovation
 
 Available tasks:
 
 1. Generate Code
-   Use when the user wants new code, a feature, function, class, or application.
+Use when the user wants to build a solution, prototype, feature, function,
+application, or implementation.
 
 2. Explain Code
-   Use when the user wants existing code explained.
+Use when the user wants to understand existing code or technology.
 
 3. Debug Code
-   Use when the user reports an error, bug, exception, or broken code.
+Use when the user wants to identify and fix errors or improve broken code.
 
 4. Review GitHub Repository
-   Use when the user wants an overall code review of a GitHub repository.
+Use when the user wants to explore an existing repository, understand its
+structure, evaluate its implementation, identify reusable components, or
+discover possible improvements.
 
 5. Repository Q&A (RAG)
-   Use when the user asks a specific question about a GitHub repository.
+Use when the user asks a specific question about an existing repository or
+wants knowledge extracted from its codebase.
+
+IMPORTANT FOR INNOVATION REQUESTS:
+
+If the user describes a new idea, societal problem, technology idea, prototype,
+or innovation concept, understand the idea first and select the capability
+that can provide the most useful next step.
+
+For innovation-related requests, the response should focus on:
+
+- Problem Understanding
+- Relevant Technologies
+- Existing Resources
+- How Existing Resources Can Be Used
+- Possible Improvements
+- Innovation Opportunities
+- Suggested Development Path
+
+Do not invent external resources or claim that Creatix searched the entire
+internet unless the user explicitly provides those resources.
 
 User request:
 {user_prompt}

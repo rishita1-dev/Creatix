@@ -28,10 +28,10 @@ from agents.pipeline import CreatixPipeline
 # --------------------------------------------------
 
 app = FastAPI(
-    title="Creatix API",
+    title="Creatix Innovation API",
     description=(
-        "Backend API for Creatix Autonomous "
-        "AI Coding Assistant"
+    "Backend API for Creatix, an AI-powered "
+    "Student Innovation Platform"
     ),
     version="1.0"
 )
